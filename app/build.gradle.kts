@@ -5,14 +5,14 @@ plugins {
 
 android {
     namespace = "com.yuanshiguang.muxueanzhuangqi"
-    compileSdk = 35
+    compileSdk = 34  // 改为34以匹配当前Android SDK
 
     defaultConfig {
         applicationId = "com.yuanshiguang.muxueanzhuangqi"
         minSdk = 19
-        targetSdk = 35
-        versionCode = 1
-        versionName = "1.0"
+        targetSdk = 34  // 改为34以匹配compileSdk
+        versionCode = beta1.0
+        versionName = "20250503"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -24,14 +24,15 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("debug")  // 添加签名配置
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
     }
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "1.8"
     }
 }
 
