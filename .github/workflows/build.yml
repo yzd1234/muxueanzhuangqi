@@ -44,3 +44,5 @@ jobs:
         with:
           name: MuXuanZhuangQi
           path: publish/
+          if-no-files-found: error # 如果没有找到文件则报错
+          retention-days: 90 # 保留90天
