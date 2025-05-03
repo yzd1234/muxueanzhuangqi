@@ -5,12 +5,12 @@ plugins {
 
 android {
     namespace = "com.yuanshiguang.muxueanzhuangqi"
-    compileSdk = 34  // 改为34以匹配当前Android SDK
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "com.yuanshiguang.muxueanzhuangqi"
         minSdk = 19
-        targetSdk = 34  // 改为34以匹配compileSdk
+        targetSdk = 34
         versionCode = beta1.0
         versionName = "20250503"
 
@@ -24,7 +24,6 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("debug")  // 添加签名配置
         }
     }
     compileOptions {
@@ -37,7 +36,6 @@ android {
 }
 
 dependencies {
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
