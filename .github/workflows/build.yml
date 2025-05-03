@@ -46,3 +46,9 @@ jobs:
           path: publish/
           if-no-files-found: error # 如果没有找到文件则报错
           retention-days: 90 # 保留90天
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: MuXuanZhuangQi
+          path: download
