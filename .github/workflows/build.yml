@@ -50,7 +50,7 @@ jobs:
           mv app/build/outputs/apk/release/app-release-signed.apk app/build/outputs/apk/release/MuXuanZhuangQi-$VERSION.apk
           
       - name: 上传APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v4.6.2
         with:
           name: MuXuanZhuangQi
           path: app/build/outputs/apk/release/MuXuanZhuangQi-*.apk
