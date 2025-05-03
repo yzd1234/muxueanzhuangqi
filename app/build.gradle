@@ -5,15 +5,13 @@ plugins {
 android {
     namespace 'com.yuanshiguang.muxueanzhuangqi'
     compileSdk 34
-
     defaultConfig {
         applicationId "com.yuanshiguang.muxueanzhuangqi"
-        minSdk 19  // 支持 Android 4.4
+        minSdk 19
         targetSdk 34
         versionCode 1
         versionName "1.0"
     }
-
     buildTypes {
         release {
             minifyEnabled false
