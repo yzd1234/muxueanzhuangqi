@@ -11,7 +11,7 @@
         FontFamily="{materialDesign:MaterialDesignFont}">
     
     <StackPanel Margin="16">
-        <TextBlock Text="木轩安装器"
+        <TextBlock Text="慕雪安装器"
                  Style="{StaticResource MaterialDesignHeadline5TextBlock}"
                  HorizontalAlignment="Center"
                  Margin="0,0,0,16"/>
