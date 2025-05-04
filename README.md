@@ -1,4 +1,4 @@
-![image]([https://github.com/yzd1234/muxueanzhuangqi/blob/main/src/MuXuanZhuangQi.UI/Resources/icon.png?raw=true](https://github.com/yzd1234/muxueanzhuangqi/blob/main/app/src/main/res/mipmap-anydpi-v26/icon.png?raw=true))慕雪安装器
+![image](https://github.com/yzd1234/muxueanzhuangqi/blob/main/app/src/main/res/mipmap-anydpi-v26/icon.png?raw=true)慕雪安装器
   # 一个平平无奇安装器
 |安装方式|是否支持|
 |:---:|:---:|
