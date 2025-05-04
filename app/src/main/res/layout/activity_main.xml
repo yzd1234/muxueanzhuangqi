@@ -27,7 +27,7 @@
             android:layout_weight="1"
             android:minWidth="120dp"
             android:hint="请输入APK路径"
-            android:focusable="false"/>
+            android:focusable="true"/>  <!-- 这里要改成true才行! -->
 
         <Button
             android:id="@+id/btn_choose_apk"
@@ -49,20 +49,3 @@
         android:text="安装"
         android:layout_marginBottom="32dp"/>
 </LinearLayout>
-<androidx.constraintlayout.widget.ConstraintLayout 
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/app_name"
-        android:textSize="24sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-</androidx.constraintlayout.widget.ConstraintLayout>
