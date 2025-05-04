@@ -9,8 +9,8 @@ android {
         applicationId "com.yuanshiguang.muxueanzhuangqi"
         minSdk 19
         targetSdk 34
-        versionCode 1
-        versionName "1.0"
+        versionCode "Beta1.0"
+        versionName "20250504"
     }
     buildTypes {
         release {

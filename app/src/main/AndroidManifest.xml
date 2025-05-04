@@ -16,10 +16,15 @@
             </intent-filter>
         </activity>
         <activity android:name=".SettingsActivity"/>
+        <activity android:name=".AboutActivity"/>
     </application>
-</manifest>
-// ... existing code ...
-    <activity android:name=".SettingsActivity"/>
-    <activity android:name=".AboutActivity"/>
-    </application>
+    <uses-sdk
+        android:minSdkVersion="19"
+        android:targetSdkVersion="33" />
+    <meta-data
+        android:name="VERSION_NAME"
+        android:value="20250504" />
+    <meta-data
+        android:name="VERSION_CODE"
+        android:value="Beta1.0" />
 </manifest>
