@@ -9,8 +9,8 @@ android {
         applicationId "com.yuanshiguang.muxueanzhuangqi"
         minSdk 19
         targetSdk 34
-        versionCode "Beta1.0"
-        versionName "20250504"
+        versionCode 20250504
+        versionName "Beta1.0"
     }
     buildTypes {
         release {
@@ -30,7 +30,6 @@ dependencies {
 }
 
 dependencies {
-    // ... existing code ...
     implementation 'dev.rikka.shizuku:api:13.1.5'
     implementation 'dev.rikka.shizuku:provider:13.1.5'
 }

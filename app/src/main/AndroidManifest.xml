@@ -23,8 +23,8 @@
         android:targetSdkVersion="33" />
     <meta-data
         android:name="VERSION_NAME"
-        android:value="20250504" />
+        android:value="Beta1.0" />
     <meta-data
         android:name="VERSION_CODE"
-        android:value="Beta1.0" />
+        android:value="20250504" />
 </manifest>
