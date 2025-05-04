@@ -9,7 +9,7 @@ android {
         applicationId "com.yuanshiguang.muxueanzhuangqi"
         minSdk 19
         targetSdk 34
-        versionCode 20250504
+        versionCode 2554
         versionName "Beta1.0"
     }
     buildTypes {
