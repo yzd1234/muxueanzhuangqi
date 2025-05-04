@@ -1,6 +1,0 @@
-<Project Sdk="Microsoft.NET.Sdk">
-    <!-- ... existing code ... -->
-    <ItemGroup>
-        <Resource Include="Resources\icon.png" />
-    </ItemGroup>
-</Project>
