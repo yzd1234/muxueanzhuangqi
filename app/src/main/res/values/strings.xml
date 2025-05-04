@@ -2,3 +2,10 @@
 <resources>
     <string name="app_name">慕雪安装器</string>
 </resources>
+
+你的软件名是“慕雪安装器”，请确保在 `res/values/strings.xml` 文件中有如下内容：
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">慕雪安装器</string>
+</resources>
