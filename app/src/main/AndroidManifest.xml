@@ -27,4 +27,8 @@
     <meta-data
         android:name="VERSION_CODE"
         android:value="20250504" />
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
 </manifest>
+<uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
+<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
