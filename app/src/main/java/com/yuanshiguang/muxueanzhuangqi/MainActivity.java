@@ -446,7 +446,7 @@ class RootInstallHandler implements InstallMethodHandler {
                 if (hasRoot) {
                     Toast.makeText(activity, "已获取 Root 权限", Toast.LENGTH_SHORT).show();
                 } else {
-                    Toast.makeText(activity, "未获取 Root 权限或授权失败", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(activity, "未获取 Root 权限", Toast.LENGTH_SHORT).show();
                 }
             });
         }).start();
