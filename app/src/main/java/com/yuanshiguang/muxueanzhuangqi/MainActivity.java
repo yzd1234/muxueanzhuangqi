@@ -14,15 +14,24 @@ import android.view.MenuItem;
 import android.content.SharedPreferences;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatDelegate;
+import android.content.pm.PackageManager; // 添加这个
+import androidx.core.app.ActivityCompat; // 添加这个
+import androidx.annotation.NonNull; // 添加这个
+import android.util.Log; // <-- 把这个加上哦~
+import rikka.shizuku.Shizuku; // 添加这个
+import androidx.core.content.FileProvider; // 添加这个 import
+import java.io.File; // 添加这个 import
 
 public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_CODE_PICK_APK = 1;
+    private static final int SHIZUKU_REQUEST_PERMISSION_CODE = 123; // 确保这里定义了
     private EditText inputBox;
+    private SharedPreferences prefs; // 把 SharedPreferences 移到成员变量
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         // 读取主题设置并应用
-        SharedPreferences prefs = getSharedPreferences("settings", MODE_PRIVATE);
+        prefs = getSharedPreferences("settings", MODE_PRIVATE); // 在 onCreate 初始化
         int mode = prefs.getInt("theme_mode", 0);
         switch (mode) {
             case 0:
@@ -40,11 +49,38 @@ public class MainActivity extends AppCompatActivity {
 
         inputBox = findViewById(R.id.input_box);
         Button btnChooseApk = findViewById(R.id.btn_choose_apk);
+        // 选择 APK 按钮的逻辑 (可以考虑用更现代的 Activity Result API)
+        btnChooseApk.setOnClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+            intent.setType("application/vnd.android.package-archive");
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            try {
+                startActivityForResult(
+                        Intent.createChooser(intent, "选择 APK 文件"),
+                        REQUEST_CODE_PICK_APK);
+            } catch (android.content.ActivityNotFoundException ex) {
+                Toast.makeText(this, "请安装文件管理器", Toast.LENGTH_SHORT).show();
+            }
+        });
+
         Button btnInstall = findViewById(R.id.btn_install);
         btnInstall.setOnClickListener(v -> {
-            SharedPreferences prefs = getSharedPreferences("settings", MODE_PRIVATE);
+            // 直接使用成员变量 prefs
             int method = prefs.getInt("install_method", 0);
             String apkPath = inputBox.getText().toString();
+
+            // 简单的路径检查
+            if (apkPath.isEmpty()) {
+                Toast.makeText(this, "请先选择或输入 APK 文件路径", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            File apkFile = new File(apkPath);
+             if (!apkFile.exists() || !apkFile.isFile()) {
+                 Toast.makeText(this, "无效的 APK 文件路径或文件不存在", Toast.LENGTH_SHORT).show();
+                 return;
+            }
+
+
             InstallMethodHandler handler;
             switch (method) {
                 case 1:
@@ -56,6 +92,8 @@ public class MainActivity extends AppCompatActivity {
                 default:
                     handler = new SystemInstallHandler();
             }
+            // 可以在这里检查权限，或者由 Handler 内部检查
+            // handler.requestPermission(this); // 如果需要先请求权限
             handler.install(this, apkPath);
         });
     }
@@ -66,10 +104,55 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == REQUEST_CODE_PICK_APK && resultCode == RESULT_OK && data != null) {
             Uri uri = data.getData();
             if (uri != null) {
-                inputBox.setText(uri.getPath());
+                // 从 Content URI 获取真实文件路径 (这部分逻辑比较复杂且易错，需要适配不同 Android 版本和 Provider)
+                // 简单的 getPath() 通常不可靠，这里暂时保留，但实际应用需要更健壮的处理
+                // 例如：复制文件到应用缓存目录再使用路径
+                String path = getPathFromUri(uri); // 尝试获取路径
+                if (path != null) {
+                    inputBox.setText(path);
+                } else {
+                    Toast.makeText(this, "无法获取文件路径，请尝试手动输入", Toast.LENGTH_SHORT).show();
+                }
             }
         }
     }
+
+    // 尝试从 URI 获取文件路径 (这是一个简化示例，可能不适用于所有情况)
+    private String getPathFromUri(Uri uri) {
+        String path = null;
+        if ("content".equalsIgnoreCase(uri.getScheme())) {
+            try (Cursor cursor = getContentResolver().query(uri, null, null, null, null)) {
+                if (cursor != null && cursor.moveToFirst()) {
+                    int index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                    if (index != -1) {
+                        String displayName = cursor.getString(index);
+                        // 尝试复制到缓存目录获取路径
+                        File cacheDir = getCacheDir();
+                        File tempFile = new File(cacheDir, displayName);
+                        try (java.io.InputStream inputStream = getContentResolver().openInputStream(uri);
+                             java.io.FileOutputStream outputStream = new java.io.FileOutputStream(tempFile)) {
+                            byte[] buffer = new byte[4 * 1024]; // 4K buffer
+                            int read;
+                            while ((read = inputStream.read(buffer)) != -1) {
+                                outputStream.write(buffer, 0, read);
+                            }
+                            outputStream.flush();
+                            path = tempFile.getAbsolutePath();
+                        } catch (Exception e) {
+                            // 复制失败，尝试其他方法或返回 null
+                            Log.e("MainActivity", "Error copying file from URI", e);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                 Log.e("MainActivity", "Error getting path from content URI", e);
+            }
+        } else if ("file".equalsIgnoreCase(uri.getScheme())) {
+            path = uri.getPath();
+        }
+        return path;
+    }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -86,6 +169,21 @@ public class MainActivity extends AppCompatActivity {
         }
         return super.onOptionsItemSelected(item);
     }
+
+    // 把这个方法移到 MainActivity 类里面！
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == SHIZUKU_REQUEST_PERMISSION_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "Shizuku 权限已授予", Toast.LENGTH_SHORT).show();
+                // 可以在这里提示用户再次点击安装按钮
+            } else {
+                Toast.makeText(this, "Shizuku 权限被拒绝", Toast.LENGTH_SHORT).show();
+            }
+        }
+        // 如果有其他权限请求，可以在这里添加 else if
+    }
 }
 
 // 定义接口
@@ -98,45 +196,160 @@ interface InstallMethodHandler {
 class SystemInstallHandler implements InstallMethodHandler {
     @Override
     public void install(AppCompatActivity activity, String apkPath) {
+        File apkFile = new File(apkPath);
+        if (!apkFile.exists()) {
+             Toast.makeText(activity, "APK 文件不存在", Toast.LENGTH_SHORT).show();
+             return;
+        }
+        // 使用 FileProvider 获取安全的 URI (推荐做法)
+        // 需要在 AndroidManifest.xml 和 res/xml/provider_paths.xml 中配置 FileProvider
+        // 这里暂时用 Uri.fromFile，但在 Android N (API 24) 及以上可能因 FileUriExposedException 失败
+        Uri apkUri;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+             // 注意：需要配置 FileProvider，这里的 "com.your.package.fileprovider" 要换成你自己的
+             // 下面这行要取消注释并且确保 FileProvider 配置好了才能用哦！
+             // apkUri = FileProvider.getUriForFile(activity, "com.yuanshiguang.muxueanzhuangqi.fileprovider", apkFile);
+             // 暂时注释掉 FileProvider，如果没配置会闪退，回退到可能不安全的方式
+             apkUri = Uri.fromFile(apkFile); // 在高版本可能不工作或不安全
+             Log.w("SystemInstall", "Using Uri.fromFile on API 24+, consider using FileProvider");
+        } else {
+            apkUri = Uri.fromFile(apkFile);
+        }
+
         Intent intent = new Intent(Intent.ACTION_VIEW);
-        intent.setDataAndType(Uri.parse(apkPath), "application/vnd.android.package-archive");
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        activity.startActivity(intent);
+        intent.setDataAndType(apkUri, "application/vnd.android.package-archive");
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION); // 需要这个 flag，特别是配合 FileProvider
+        try {
+            activity.startActivity(intent);
+        } catch (Exception e) {
+             Toast.makeText(activity, "无法启动安装程序: " + e.getMessage(), Toast.LENGTH_LONG).show();
+             Log.e("SystemInstall", "Error starting install intent", e);
+        }
     }
     @Override
     public void requestPermission(AppCompatActivity activity) {
-        // 系统安装无需特殊权限
+        // 系统安装通常需要 "REQUEST_INSTALL_PACKAGES" 权限 (Android O+)
+        // 但这个权限通常在用户点击安装时由系统处理，应用层面一般无需主动请求
+        // 可以在 AndroidManifest.xml 中声明 <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     }
 }
 
 // Shizuku 安装方式（需集成 Shizuku SDK）
 class ShizukuInstallHandler implements InstallMethodHandler {
-    @Override
-    public void install(AppCompatActivity activity, String apkPath) {
-        try {
-            // 检查 Shizuku 权限
-            if (!Shizuku.pingBinder() ||
-                Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) {
-                Toast.makeText(activity, "Shizuku 未连接或未授权", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            // 通过 Shizuku 执行 pm install
-            String[] cmd = new String[]{"pm", "install", "-r", apkPath};
-            Process process = rikka.shizuku.Shizuku.newProcess(cmd, null, null);
-            int result = process.waitFor();
-            if (result == 0) {
-                Toast.makeText(activity, "Shizuku 安装成功", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(activity, "Shizuku 安装失败，代码：" + result, Toast.LENGTH_SHORT).show();
-            }
-        } catch (Exception e) {
-            Toast.makeText(activity, "Shizuku 安装异常: " + e.getMessage(), Toast.LENGTH_LONG).show();
+
+    private boolean checkShizukuPermission(AppCompatActivity activity) {
+        if (Shizuku.isPreV11()) {
+            // Shizuku V11 之前的版本不支持运行时权限
+            return false;
+        }
+        if (Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED) {
+            return true;
+        } else if (Shizuku.shouldShowRequestPermissionRationale()) {
+            // 用户拒绝过权限，可以提示用户为什么需要这个权限
+            Toast.makeText(activity, "需要 Shizuku 权限才能安装应用", Toast.LENGTH_SHORT).show();
+            return false;
+        } else {
+            // 请求权限
+            requestPermission(activity);
+            return false;
         }
     }
+
+    @Override
+    public void install(AppCompatActivity activity, String apkPath) {
+        // 检查 apkPath 是否为空
+        if (apkPath == null || apkPath.isEmpty()) {
+            Toast.makeText(activity, "APK 路径不能为空", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        // 简单的路径有效性检查 (实际可能需要更复杂的检查)
+        java.io.File apkFile = new java.io.File(apkPath);
+        if (!apkFile.exists() || !apkFile.isFile()) {
+             Toast.makeText(activity, "无效的 APK 文件路径", Toast.LENGTH_SHORT).show();
+             return;
+        }
+
+        // 检查 Shizuku 是否在运行以及是否已授权
+        if (!Shizuku.pingBinder()) {
+            Toast.makeText(activity, "Shizuku 服务未运行", Toast.LENGTH_SHORT).show();
+            // 可以引导用户去 Shizuku 应用启动服务
+            return;
+        }
+        if (!checkShizukuPermission(activity)) {
+             // 如果没有权限，checkShizukuPermission 内部会处理请求或提示
+            return;
+        }
+
+        // 使用 Shizuku 安装 (同样建议后台线程)
+        new Thread(() -> {
+            Process process = null;
+            java.io.BufferedReader stdoutReader = null;
+            java.io.BufferedReader stderrReader = null;
+            int result = -1;
+            StringBuilder output = new StringBuilder();
+            StringBuilder error = new StringBuilder();
+
+            try {
+                // 注意：直接拼接字符串可能存在注入风险
+                String[] cmd = new String[]{"pm", "install", "-r", apkPath};
+                // 使用 Shizuku API 执行命令
+                process = Shizuku.newProcess(cmd, null, null);
+
+                // 读取标准输出和错误输出
+                stdoutReader = new java.io.BufferedReader(new java.io.InputStreamReader(process.getInputStream()));
+                stderrReader = new java.io.BufferedReader(new java.io.InputStreamReader(process.getErrorStream()));
+                String line;
+                while ((line = stdoutReader.readLine()) != null) {
+                    output.append(line).append("\n");
+                }
+                while ((line = stderrReader.readLine()) != null) {
+                    error.append(line).append("\n");
+                }
+
+                result = process.waitFor();
+
+            } catch (Throwable e) { // 捕获 Throwable 以包含 Shizuku 可能抛出的错误
+                error.append("Shizuku 执行异常: ").append(e.getMessage());
+                result = -1;
+            } finally {
+                 try {
+                    if (stdoutReader != null) stdoutReader.close();
+                    if (stderrReader != null) stderrReader.close();
+                    if (process != null) process.destroy();
+                } catch (Exception ignored) {}
+
+                final int finalResult = result;
+                final String finalOutput = output.toString().trim();
+                final String finalError = error.toString().trim();
+
+                activity.runOnUiThread(() -> {
+                    if (finalResult == 0 && finalOutput.toLowerCase().contains("success")) { // pm install 成功通常输出 Success
+                        Toast.makeText(activity, "Shizuku 安装成功", Toast.LENGTH_SHORT).show();
+                    } else {
+                        String message = "Shizuku 安装失败";
+                        if (!finalError.isEmpty()) {
+                            message += "，错误信息:\n" + finalError;
+                        } else if (!finalOutput.isEmpty()) {
+                            message += "，输出信息:\n" + finalOutput;
+                        } else {
+                             message += "，代码：" + finalResult;
+                        }
+                        Toast.makeText(activity, message, Toast.LENGTH_LONG).show();
+                    }
+                });
+            }
+        }).start();
+    }
+
     @Override
     public void requestPermission(AppCompatActivity activity) {
-        Toast.makeText(activity, "Shizuku 权限请求接口占位", Toast.LENGTH_SHORT).show();
-        // 这里应调用 Shizuku SDK 的权限请求方法
+        if (Shizuku.isPreV11()) {
+             Toast.makeText(activity, "当前 Shizuku 版本过低，不支持运行时权限", Toast.LENGTH_SHORT).show();
+             return;
+        }
+        // 调用 Shizuku SDK 请求权限
+        Shizuku.requestPermission(activity, MainActivity.SHIZUKU_REQUEST_PERMISSION_CODE);
     }
 }
 
@@ -144,31 +357,97 @@ class ShizukuInstallHandler implements InstallMethodHandler {
 class RootInstallHandler implements InstallMethodHandler {
     @Override
     public void install(AppCompatActivity activity, String apkPath) {
-        try {
-            Process process = Runtime.getRuntime().exec("su");
-            java.io.DataOutputStream os = new java.io.DataOutputStream(process.getOutputStream());
-            os.writeBytes("pm install -r \"" + apkPath + "\"\n");
-            os.writeBytes("exit\n");
-            os.flush();
-            int result = process.waitFor();
-            if (result == 0) {
-                Toast.makeText(activity, "Root 安装成功", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(activity, "Root 安装失败，代码：" + result, Toast.LENGTH_SHORT).show();
-            }
-        } catch (Exception e) {
-            Toast.makeText(activity, "Root 安装异常: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        // 检查 apkPath 是否为空
+        if (apkPath == null || apkPath.isEmpty()) {
+            Toast.makeText(activity, "APK 路径不能为空", Toast.LENGTH_SHORT).show();
+            return;
         }
+        // 简单的路径有效性检查 (实际可能需要更复杂的检查)
+        java.io.File apkFile = new java.io.File(apkPath);
+        if (!apkFile.exists() || !apkFile.isFile()) {
+             Toast.makeText(activity, "无效的 APK 文件路径", Toast.LENGTH_SHORT).show();
+             return;
+        }
+
+        // 尝试执行 Root 安装
+        new Thread(() -> { // 在后台线程执行耗时操作
+            Process process = null;
+            java.io.DataOutputStream os = null;
+            java.io.BufferedReader errorReader = null;
+            int result = -1;
+            StringBuilder errorMsg = new StringBuilder();
+
+            try {
+                process = Runtime.getRuntime().exec("su"); // 请求 Root 权限
+                os = new java.io.DataOutputStream(process.getOutputStream());
+                // 注意：直接拼接字符串可能存在注入风险，但对于本地文件路径，风险相对较低
+                // 更好的方式是使用 Content Provider 获取 InputStream 并传递给 PackageInstaller API (如果不用 Root)
+                os.writeBytes("pm install -r \"" + apkPath + "\"\n");
+                os.writeBytes("exit\n");
+                os.flush();
+
+                // 读取错误流
+                errorReader = new java.io.BufferedReader(new java.io.InputStreamReader(process.getErrorStream()));
+                String line;
+                while ((line = errorReader.readLine()) != null) {
+                    errorMsg.append(line).append("\n");
+                }
+
+                result = process.waitFor(); // 等待命令执行完成
+
+            } catch (Exception e) {
+                errorMsg.append("执行异常: ").append(e.getMessage());
+                result = -1; // 标记为异常
+            } finally {
+                try {
+                    if (os != null) os.close();
+                    if (errorReader != null) errorReader.close();
+                    if (process != null) process.destroy();
+                } catch (Exception ignored) {}
+
+                // 在 UI 线程更新 Toast
+                final int finalResult = result;
+                final String finalErrorMsg = errorMsg.toString().trim();
+                activity.runOnUiThread(() -> {
+                    if (finalResult == 0) {
+                        Toast.makeText(activity, "Root 安装成功", Toast.LENGTH_SHORT).show();
+                    } else {
+                        String message = "Root 安装失败";
+                        if (!finalErrorMsg.isEmpty()) {
+                            message += "，错误信息:\n" + finalErrorMsg;
+                        } else {
+                            message += "，代码：" + finalResult;
+                        }
+                        Toast.makeText(activity, message, Toast.LENGTH_LONG).show();
+                    }
+                });
+            }
+        }).start();
     }
+
     @Override
     public void requestPermission(AppCompatActivity activity) {
-        try {
-            Process process = Runtime.getRuntime().exec("su");
-            process.exitValue();
-            return true;
-        } catch (Exception e) {
-            Toast.makeText(activity, "未获取Root权限", Toast.LENGTH_SHORT).show();
-            return false;
-        }
+        // 尝试执行一个简单的 Root 命令来检查权限
+        new Thread(() -> {
+            Process process = null;
+            int result = -1;
+            try {
+                process = Runtime.getRuntime().exec("su -c id"); // 执行 id 命令
+                result = process.waitFor();
+            } catch (Exception e) {
+                result = -1;
+            } finally {
+                if (process != null) process.destroy();
+            }
+
+            final boolean hasRoot = (result == 0);
+            activity.runOnUiThread(() -> {
+                if (hasRoot) {
+                    Toast.makeText(activity, "已获取 Root 权限", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(activity, "未获取 Root 权限或授权失败", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }).start();
     }
 }
