@@ -29,4 +29,5 @@ dependencies {
     implementation 'com.google.android.material:material:1.10.0'
     implementation 'dev.rikka.shizuku:api:13.1.5'
     implementation 'dev.rikka.shizuku:provider:13.1.5'
+    // 不要用module()方法啦!
 }

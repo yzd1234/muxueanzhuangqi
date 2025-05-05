@@ -115,8 +115,8 @@ class ShizukuInstallHandler implements InstallMethodHandler {
     public void install(AppCompatActivity activity, String apkPath) {
         try {
             // 检查 Shizuku 权限
-            if (!rikka.shizuku.Shizuku.pingBinder() ||
-                rikka.shizuku.Shizuku.checkSelfPermission() != activity.getPackageManager().PERMISSION_GRANTED) {
+            if (!Shizuku.pingBinder() ||
+                Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) {
                 Toast.makeText(activity, "Shizuku 未连接或未授权", Toast.LENGTH_SHORT).show();
                 return;
             }
@@ -162,7 +162,13 @@ class RootInstallHandler implements InstallMethodHandler {
     }
     @Override
     public void requestPermission(AppCompatActivity activity) {
-        Toast.makeText(activity, "Root 权限请求接口占位", Toast.LENGTH_SHORT).show();
-        // 这里应实现 root 权限检测与请求
+        try {
+            Process process = Runtime.getRuntime().exec("su");
+            process.exitValue();
+            return true;
+        } catch (Exception e) {
+            Toast.makeText(activity, "未获取Root权限", Toast.LENGTH_SHORT).show();
+            return false;
+        }
     }
 }
