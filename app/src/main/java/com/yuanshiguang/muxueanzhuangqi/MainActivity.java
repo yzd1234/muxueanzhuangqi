@@ -21,10 +21,11 @@ import android.util.Log; // <-- 把这个加上哦~
 import rikka.shizuku.Shizuku; // 添加这个
 import androidx.core.content.FileProvider; // 添加这个 import
 import java.io.File; // 添加这个 import
+import com.yuanshiguang.muxueanzhuangqi.Api;
 
 public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_CODE_PICK_APK = 1;
-    private static final int SHIZUKU_REQUEST_PERMISSION_CODE = 123; // 确保这里定义了
+    private static final int SHIZUKU_REQUEST_PERMISSION_CODE = 123; // 确保这个常量是public的
     private EditText inputBox;
     private SharedPreferences prefs; // 把 SharedPreferences 移到成员变量
 
@@ -294,8 +295,9 @@ class ShizukuInstallHandler implements InstallMethodHandler {
                 // 注意：直接拼接字符串可能存在注入风险
                 String[] cmd = new String[]{"pm", "install", "-r", apkPath};
                 // 使用 Shizuku API 执行命令
+                // 使用Shizuku提供的公开API创建进程
                 process = Shizuku.Process.create(cmd);
-
+                
                 // 读取标准输出和错误输出
                 stdoutReader = new java.io.BufferedReader(new java.io.InputStreamReader(process.getInputStream()));
                 stderrReader = new java.io.BufferedReader(new java.io.InputStreamReader(process.getErrorStream()));
@@ -306,9 +308,8 @@ class ShizukuInstallHandler implements InstallMethodHandler {
                 while ((line = stderrReader.readLine()) != null) {
                     error.append(line).append("\n");
                 }
-
+            
                 result = process.waitFor();
-
             } catch (Throwable e) { // 捕获 Throwable 以包含 Shizuku 可能抛出的错误
                 error.append("Shizuku 执行异常: ").append(e.getMessage());
                 result = -1;
@@ -318,11 +319,11 @@ class ShizukuInstallHandler implements InstallMethodHandler {
                     if (stderrReader != null) stderrReader.close();
                     if (process != null) process.destroy();
                 } catch (Exception ignored) {}
-
+            
                 final int finalResult = result;
                 final String finalOutput = output.toString().trim();
                 final String finalError = error.toString().trim();
-
+            
                 activity.runOnUiThread(() -> {
                     if (finalResult == 0 && finalOutput.toLowerCase().contains("success")) { // pm install 成功通常输出 Success
                         Toast.makeText(activity, "Shizuku 安装成功", Toast.LENGTH_SHORT).show();
@@ -341,16 +342,16 @@ class ShizukuInstallHandler implements InstallMethodHandler {
             }
         }).start();
     }
-
     @Override
     public void requestPermission(AppCompatActivity activity) {
         if (Shizuku.isPreV11()) {
              Toast.makeText(activity, "当前 Shizuku 版本过低，不支持运行时权限", Toast.LENGTH_SHORT).show();
              return;
         }
-        // 调用 Shizuku SDK 请求权限
-        Shizuku.requestPermission(activity, MainActivity.SHIZUKU_REQUEST_PERMISSION_CODE);
+        // 使用正确的requestPermission方法
+        Shizuku.requestPermission(MainActivity.SHIZUKU_REQUEST_PERMISSION_CODE);
     }
+}
 }
 
 // Root 安装方式
@@ -376,7 +377,7 @@ class RootInstallHandler implements InstallMethodHandler {
             java.io.BufferedReader errorReader = null;
             int result = -1;
             StringBuilder errorMsg = new StringBuilder();
-
+        
             try {
                 process = Runtime.getRuntime().exec("su"); // 请求 Root 权限
                 os = new java.io.DataOutputStream(process.getOutputStream());
@@ -385,16 +386,16 @@ class RootInstallHandler implements InstallMethodHandler {
                 os.writeBytes("pm install -r \"" + apkPath + "\"\n");
                 os.writeBytes("exit\n");
                 os.flush();
-
+        
                 // 读取错误流
                 errorReader = new java.io.BufferedReader(new java.io.InputStreamReader(process.getErrorStream()));
                 String line;
                 while ((line = errorReader.readLine()) != null) {
                     errorMsg.append(line).append("\n");
                 }
-
+        
                 result = process.waitFor(); // 等待命令执行完成
-
+        
             } catch (Exception e) {
                 errorMsg.append("执行异常: ").append(e.getMessage());
                 result = -1; // 标记为异常
@@ -404,7 +405,7 @@ class RootInstallHandler implements InstallMethodHandler {
                     if (errorReader != null) errorReader.close();
                     if (process != null) process.destroy();
                 } catch (Exception ignored) {}
-
+        
                 // 在 UI 线程更新 Toast
                 final int finalResult = result;
                 final String finalErrorMsg = errorMsg.toString().trim();
