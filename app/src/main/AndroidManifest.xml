@@ -4,13 +4,15 @@
 
     <!-- 权限声明 -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
-                     android:maxSdkVersion="32" /> <!-- 低于 Android 13 才需要 -->
+    <!-- READ_EXTERNAL_STORAGE 在 targetSdk 33+ 上通常不再需要，系统会自动处理媒体文件访问 -->
+    <!-- 如果确实需要访问非媒体文件，可能需要 MANAGE_EXTERNAL_STORAGE (需要 Google Play 审核) -->
+    <!-- <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+                     android:maxSdkVersion="32" /> -->
 
     <!-- SDK 版本要求 -->
     <uses-sdk
-        android:minSdkVersion="24" <!-- <-- 这里也改成 24 哦~ -->
-        android:targetSdkVersion="34" /> <!-- 确保与 build.gradle 一致 -->
+        android:minSdkVersion="24"
+        android:targetSdkVersion="34" />
 
     <!-- 应用配置 -->
     <application
@@ -19,7 +21,8 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/Theme.MaterialComponents.DayNight"
-        tools:targetApi="34"> <!-- targetApi 建议与 targetSdkVersion 一致 -->
+        tools:targetApi="34">
+
         <activity android:name=".MainActivity"
             android:exported="true">
             <intent-filter>
@@ -27,19 +30,36 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".SettingsActivity"/>
-        <activity android:name=".AboutActivity"/>
+        <activity android:name=".SettingsActivity"
+            android:exported="false"/> <!-- 明确指定 exported="false" 更清晰 -->
+        <activity android:name=".AboutActivity"
+            android:exported="false"/>   <!-- 明确指定 exported="false" 更清晰 -->
 
-        <!-- meta-data 放在 application 内部更规范 -->
+        <!-- FileProvider 配置 (如果使用系统安装方式，强烈建议配置) -->
+        <!-- 需要在 res/xml/ 目录下创建 provider_paths.xml 文件 -->
+        <!--
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/provider_paths" />
+        </provider>
+        -->
+
+        <!-- meta-data 通常不需要手动添加版本信息，构建系统会自动处理 -->
+        <!--
         <meta-data
             android:name="VERSION_NAME"
             android:value="Beta1.0" />
         <meta-data
             android:name="VERSION_CODE"
-            android:value="2554" /> <!-- 这个值应该与 build.gradle 中的 versionCode 一致 -->
+            android:value="2554" />
+        -->
 
     </application>
 
 </manifest>
-<!-- 确保 </manifest> 后面没有任何内容！ -->
-<mcfile name="AndroidManifest.xml" path="d:\muxueanzhuangqi\app\src\main\AndroidManifest.xml"></mcfile> 里面的 `minSdkVersion` 也改一下吧，虽然构建时是以 `build.gradle` 为准的~ (真是麻烦~)
+<!-- 确保文件末尾没有任何多余的内容！ -->
