@@ -3,30 +3,56 @@ name: 构建APK
 on:
   push:
     tags:
-      - 'v*'
-  workflow_dispatch:
+      - 'v*' # 当有 v 开头的 tag 推送时触发
+  workflow_dispatch: # 允许手动触发
 
 jobs:
   build:
     name: 构建APK
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest # 使用最新的 Ubuntu 运行环境
 
     steps:
-      # 新增：取消正在进行中的相同工作流
-      - name: 取消先前的工作流运行
-        uses: styfle/cancel-workflow-action@0.12.1
-        with:
-          access_token: ${{ github.token }}
-
       - name: 检出代码
-        uses: actions/checkout@v4
-      # ... a lot of existing steps ...
+        uses: actions/checkout@v4 # 拉取仓库代码
+
+      - name: 设置JDK
+        uses: actions/setup-java@v4 # 设置 Java 环境
+        with:
+          distribution: 'zulu' # 使用 Zulu 发行版
+          java-version: '17' # 设置 Java 版本为 17
+
+      - name: 设置Android SDK
+        uses: android-actions/setup-android@v3 # 设置 Android SDK 环境
+
+      - name: 设置Gradle
+        uses: gradle/gradle-build-action@v2 # 设置 Gradle 环境，会自动缓存依赖
+
+      - name: 授予Gradle执行权限
+        run: chmod +x gradlew # 给 gradlew 脚本添加执行权限
+
+      - name: 构建APK
+        run: ./gradlew assembleRelease # 执行 Gradle 构建命令，生成 Release 包
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@v4 # 上传构建好的 APK 文件作为产物
+        with:
+          name: MuXuanZhuangQi # 产物名称
+          path: | # 上传路径匹配规则
+            **/app-release*.apk
+          if-no-files-found: error # 如果找不到文件则报错
+          retention-days: 90 # 产物保留天数
+
+      - name: 下载构建产物
+        uses: actions/download-artifact@v4 # 下载之前上传的产物（在同一 Job 中通常意义不大）
+        with:
+          name: MuXuanZhuangQi # 要下载的产物名称
+          path: download # 下载到名为 download 的目录
 
       - name: 创建Release
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/') # 仅在推送 tag 时执行
+        uses: softprops/action-gh-release@v1 # 使用 action 创建 GitHub Release
         with:
-          files: |
+          files: | # 要附加到 Release 的文件
             **/app-release*.apk
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # 使用仓库自带的 GITHUB_TOKEN 进行认证
