@@ -37,7 +37,8 @@ public class SettingsActivity extends AppCompatActivity {
             prefs.edit().putInt("install_method", method).apply();
         });
         RadioGroup themeModeGroup = findViewById(R.id.theme_mode_group);
-        SharedPreferences prefs = getSharedPreferences("settings", MODE_PRIVATE);
+        // 删除下面这行重复的prefs定义
+        // SharedPreferences prefs = getSharedPreferences("settings", MODE_PRIVATE);
         int savedTheme = prefs.getInt("theme_mode", 0);
         themeModeGroup.check(
             savedTheme == 0 ? R.id.radio_theme_system :

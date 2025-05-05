@@ -1,4 +1,13 @@
+import android.content.pm.PackageManager;
+import android.widget.Toast;
+import androidx.appcompat.app.AppCompatActivity;
 import rikka.shizuku.Shizuku;
+
+// 定义接口
+interface InstallMethodHandler {
+    void install(AppCompatActivity activity, String apkPath);
+    void requestPermission(AppCompatActivity activity);
+}
 
 class ShizukuInstallHandler implements InstallMethodHandler {
     @Override
