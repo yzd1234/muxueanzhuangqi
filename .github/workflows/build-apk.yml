@@ -12,9 +12,6 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-      - name: 检出代码
-        uses: actions/checkout@v4
-        
       - name: 设置JDK
         uses: actions/setup-java@v4
         with:
@@ -48,11 +45,3 @@ jobs:
           name: MuXuanZhuangQi
           path: download
           
-      - name: 创建Release
-        if: startsWith(github.ref, 'refs/tags/')
-        uses: softprops/action-gh-release@v1
-        with:
-          files: |
-            **/app-release*.apk
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
