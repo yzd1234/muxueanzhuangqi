@@ -294,7 +294,7 @@ class ShizukuInstallHandler implements InstallMethodHandler {
                 // 注意：直接拼接字符串可能存在注入风险
                 String[] cmd = new String[]{"pm", "install", "-r", apkPath};
                 // 使用 Shizuku API 执行命令
-                process = Shizuku.newProcess(cmd, null, null);
+                process = Shizuku.Process.create(cmd);
 
                 // 读取标准输出和错误输出
                 stdoutReader = new java.io.BufferedReader(new java.io.InputStreamReader(process.getInputStream()));
