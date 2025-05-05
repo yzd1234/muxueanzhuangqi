@@ -452,3 +452,4 @@ class RootInstallHandler implements InstallMethodHandler {
         }).start();
     }
 }
+}
