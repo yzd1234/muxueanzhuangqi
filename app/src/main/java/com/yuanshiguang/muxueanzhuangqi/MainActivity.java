@@ -351,8 +351,7 @@ class ShizukuInstallHandler implements InstallMethodHandler {
         // 使用正确的requestPermission方法
         Shizuku.requestPermission(MainActivity.SHIZUKU_REQUEST_PERMISSION_CODE);
     }
-}
-}
+} // ← 这里只需要一个结束 ShizukuInstallHandler 的大括号，不要多写！
 
 // Root 安装方式
 class RootInstallHandler implements InstallMethodHandler {
@@ -451,5 +450,5 @@ class RootInstallHandler implements InstallMethodHandler {
             });
         }).start();
     }
-}
+} // ← 这里只需要一个结束 RootInstallHandler 的大括号，不要多写！
 }

@@ -37,17 +37,15 @@
 
         <!-- FileProvider 配置 (如果使用系统安装方式，强烈建议配置) -->
         <!-- 需要在 res/xml/ 目录下创建 provider_paths.xml 文件 -->
-        <!--
         <provider
             android:name="androidx.core.content.FileProvider"
-            android:authorities="${applicationId}.fileprovider"
+            android:authorities="com.yuanshiguang.muxueanzhuangqi.fileprovider"
             android:exported="false"
             android:grantUriPermissions="true">
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
-                android:resource="@xml/provider_paths" />
+                android:resource="@xml/provider_paths"/>
         </provider>
-        -->
 
         <!-- meta-data 通常不需要手动添加版本信息，构建系统会自动处理 -->
         <!--
@@ -62,4 +60,13 @@
     </application>
 
 </manifest>
+<provider
+    android:name="androidx.core.content.FileProvider"
+    android:authorities="com.yuanshiguang.muxueanzhuangqi.fileprovider"
+    android:exported="false"
+    android:grantUriPermissions="true">
+    <meta-data
+        android:name="android.support.FILE_PROVIDER_PATHS"
+        android:resource="@xml/provider_paths"/>
+</provider>
 <!-- 确保文件末尾没有任何多余的内容！ -->
