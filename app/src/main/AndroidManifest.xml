@@ -9,7 +9,7 @@
 
     <!-- SDK 版本要求 -->
     <uses-sdk
-        android:minSdkVersion="19"
+        android:minSdkVersion="23" <!-- <-- 这里也改成 23 哦~ -->
         android:targetSdkVersion="34" /> <!-- 确保与 build.gradle 一致 -->
 
     <!-- 应用配置 -->
