@@ -30,24 +30,28 @@ jobs:
       - name: 授予Gradle执行权限
         run: chmod +x gradlew # 给 gradlew 脚本添加执行权限
 
-      # 添加这个构建步骤！编译错误会在这里显示出来~
+      # 构建APK，加上 --stacktrace 获取更详细的错误日志
       - name: 构建APK (包含编译)
-        run: ./gradlew assembleRelease
+        run: ./gradlew assembleRelease --stacktrace
 
-      # 这个步骤可以保留，用于查看更详细的构建过程信息，但编译错误主要看上一步
-      - name: 生成日志 (可选，查看详细构建信息)
-        run: ./gradlew --info
+      # 这个步骤可以删掉或者保留，主要看上一步的输出
+      # - name: 生成日志 (可选，查看详细构建信息)
+      #   run: ./gradlew --info
 
       - name: 上传构建产物
-        uses: actions/upload-artifact@v4 # 上传构建好的 APK 文件作为产物
+        uses: actions/upload-artifact@v4
         with:
-          name: MuXuanZhuangQi # 产物名称
-          path: | # 上传路径匹配规则
+          name: MuXuanZhuangQi
+          path: |
             **/app-release*.apk
-          if-no-files-found: error # 如果找不到文件则报错
-          retention-days: 90 # 产物保留天数
+          if-no-files-found: error # 找不到 APK 就报错，说明构建失败了
+          retention-days: 90
 
-      # ... existing code ...
+      - name: 下载构建产物
+        uses: actions/download-artifact@v4 # 下载之前上传的产物（在同一 Job 中通常意义不大）
+        with:
+          name: MuXuanZhuangQi # 要下载的产物名称
+          path: download # 下载到名为 download 的目录
 
       - name: 创建Release
         if: startsWith(github.ref, 'refs/tags/') # 仅在推送 tag 时执行
