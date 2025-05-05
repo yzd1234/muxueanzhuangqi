@@ -7,7 +7,7 @@ android {
     compileSdk 34
     defaultConfig {
         applicationId "com.yuanshiguang.muxueanzhuangqi"
-        minSdk 23 // <-- 看这里！改成 23 啦！
+        minSdk 24 // <-- 看这里！改成 24 啦！
         targetSdk 34
         versionCode 2554
         versionName "Beta1.0"

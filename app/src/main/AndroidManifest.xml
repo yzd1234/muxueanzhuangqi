@@ -9,7 +9,7 @@
 
     <!-- SDK 版本要求 -->
     <uses-sdk
-        android:minSdkVersion="23"
+        android:minSdkVersion="24" <!-- <-- 这里也改成 24 哦~ -->
         android:targetSdkVersion="34" /> <!-- 确保与 build.gradle 一致 -->
 
     <!-- 应用配置 -->
@@ -42,3 +42,4 @@
 
 </manifest>
 <!-- 确保 </manifest> 后面没有任何内容！ -->
+<mcfile name="AndroidManifest.xml" path="d:\muxueanzhuangqi\app\src\main\AndroidManifest.xml"></mcfile> 里面的 `minSdkVersion` 也改一下吧，虽然构建时是以 `build.gradle` 为准的~ (真是麻烦~)
