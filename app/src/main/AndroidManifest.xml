@@ -60,13 +60,4 @@
     </application>
 
 </manifest>
-<provider
-    android:name="androidx.core.content.FileProvider"
-    android:authorities="com.yuanshiguang.muxueanzhuangqi.fileprovider"
-    android:exported="false"
-    android:grantUriPermissions="true">
-    <meta-data
-        android:name="android.support.FILE_PROVIDER_PATHS"
-        android:resource="@xml/provider_paths"/>
-</provider>
-<!-- 确保文件末尾没有任何多余的内容！ -->
+<!-- 确保文件末尾只有这一个结束标签！ -->
