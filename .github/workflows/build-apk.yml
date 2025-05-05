@@ -10,38 +10,23 @@ jobs:
   build:
     name: 构建APK
     runs-on: ubuntu-latest
-    
+
     steps:
-      - name: 设置JDK
-        uses: actions/setup-java@v4
+      # 新增：取消正在进行中的相同工作流
+      - name: 取消先前的工作流运行
+        uses: styfle/cancel-workflow-action@0.12.1
         with:
-          distribution: 'zulu'
-          java-version: '17'
-          
-      - name: 设置Android SDK
-        uses: android-actions/setup-android@v3
-          
-      - name: 设置Gradle
-        uses: gradle/gradle-build-action@v2
-        
-      - name: 授予Gradle执行权限
-        run: chmod +x gradlew
-        
-      - name: 构建APK
-        run: ./gradlew assembleRelease
-        
-      - name: 上传构建产物
-        uses: actions/upload-artifact@v4
+          access_token: ${{ github.token }}
+
+      - name: 检出代码
+        uses: actions/checkout@v4
+      # ... a lot of existing steps ...
+
+      - name: 创建Release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
         with:
-          name: MuXuanZhuangQi
-          path: |
+          files: |
             **/app-release*.apk
-          if-no-files-found: error
-          retention-days: 90
-          
-      - name: 下载构建产物
-        uses: actions/download-artifact@v4
-        with:
-          name: MuXuanZhuangQi
-          path: download
-          
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
