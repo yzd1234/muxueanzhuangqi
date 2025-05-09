@@ -4,11 +4,6 @@
 
     <!-- 权限声明 -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES"/>
-    <!-- READ_EXTERNAL_STORAGE 在 targetSdk 33+ 上通常不再需要，系统会自动处理媒体文件访问 -->
-    <!-- 如果确实需要访问非媒体文件，可能需要 MANAGE_EXTERNAL_STORAGE (需要 Google Play 审核) -->
-    <!-- <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
-                     android:maxSdkVersion="32" /> -->
-
     <!-- SDK 版本要求 -->
     <uses-sdk
         android:minSdkVersion="24"
@@ -48,16 +43,12 @@
         </provider>
 
         <!-- meta-data 通常不需要手动添加版本信息，构建系统会自动处理 -->
-        <!--
         <meta-data
             android:name="VERSION_NAME"
             android:value="Beta1.0" />
         <meta-data
             android:name="VERSION_CODE"
             android:value="2554" />
-        -->
-
     </application>
 
 </manifest>
-<!-- 确保文件末尾只有这一个结束标签！ -->

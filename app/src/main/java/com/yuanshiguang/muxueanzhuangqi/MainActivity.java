@@ -193,6 +193,48 @@ interface InstallMethodHandler {
     void requestPermission(AppCompatActivity activity);
 }
 
+// 公共工具类
+class InstallUtils {
+    static boolean checkApkFile(AppCompatActivity activity, String apkPath) {
+        if (apkPath == null || apkPath.isEmpty()) {
+            Toast.makeText(activity, "APK 路径不能为空", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        java.io.File apkFile = new java.io.File(apkPath);
+        if (!apkFile.exists() || !apkFile.isFile()) {
+            Toast.makeText(activity, "无效的 APK 文件路径", Toast.LENGTH_SHORT).show();
+            return false;
+        }
+        return true;
+    }
+
+    static void showInstallResult(AppCompatActivity activity, int result, String output, String error, String handlerName) {
+        try {
+            activity.runOnUiThread(() -> {
+                try {
+                    if (result == 0 && (output == null || output.toLowerCase().contains("success"))) {
+                        Toast.makeText(activity, handlerName + " 安装成功", Toast.LENGTH_SHORT).show();
+                    } else {
+                        String message = handlerName + " 安装失败";
+                        if (error != null && !error.isEmpty()) {
+                            message += "，错误信息:\n" + error;
+                        } else if (output != null && !output.isEmpty()) {
+                            message += "，输出信息:\n" + output;
+                        } else {
+                            message += "，代码：" + result;
+                        }
+                        Toast.makeText(activity, message, Toast.LENGTH_LONG).show();
+                    }
+                } catch (Exception e) {
+                    Log.e("InstallUtils", "UI thread error", e);
+                }
+            });
+        } catch (Exception e) {
+            Log.e("InstallUtils", "Failed to post to UI thread", e);
+        }
+    }
+}
+
 // 系统安装方式
 class SystemInstallHandler implements InstallMethodHandler {
     @Override
@@ -202,17 +244,10 @@ class SystemInstallHandler implements InstallMethodHandler {
              Toast.makeText(activity, "APK 文件不存在", Toast.LENGTH_SHORT).show();
              return;
         }
-        // 使用 FileProvider 获取安全的 URI (推荐做法)
-        // 需要在 AndroidManifest.xml 和 res/xml/provider_paths.xml 中配置 FileProvider
-        // 这里暂时用 Uri.fromFile，但在 Android N (API 24) 及以上可能因 FileUriExposedException 失败
+        // 使用 FileProvider 获取安全的 URI
         Uri apkUri;
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-             // 注意：需要配置 FileProvider，这里的 "com.your.package.fileprovider" 要换成你自己的
-             // 下面这行要取消注释并且确保 FileProvider 配置好了才能用哦！
-             // apkUri = FileProvider.getUriForFile(activity, "com.yuanshiguang.muxueanzhuangqi.fileprovider", apkFile);
-             // 暂时注释掉 FileProvider，如果没配置会闪退，回退到可能不安全的方式
-             apkUri = Uri.fromFile(apkFile); // 在高版本可能不工作或不安全
-             Log.w("SystemInstall", "Using Uri.fromFile on API 24+, consider using FileProvider");
+            apkUri = FileProvider.getUriForFile(activity, "com.yuanshiguang.muxueanzhuangqi.fileprovider", apkFile);
         } else {
             apkUri = Uri.fromFile(apkFile);
         }
@@ -242,13 +277,15 @@ class ShizukuInstallHandler implements InstallMethodHandler {
     private boolean checkShizukuPermission(AppCompatActivity activity) {
         if (Shizuku.isPreV11()) {
             // Shizuku V11 之前的版本不支持运行时权限
+            Toast.makeText(activity, "请升级 Shizuku 到最新版本", Toast.LENGTH_SHORT).show();
             return false;
         }
         if (Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED) {
             return true;
         } else if (Shizuku.shouldShowRequestPermissionRationale()) {
-            // 用户拒绝过权限，可以提示用户为什么需要这个权限
-            Toast.makeText(activity, "需要 Shizuku 权限才能安装应用", Toast.LENGTH_SHORT).show();
+            // 用户拒绝过权限，显示更详细的解释
+            Toast.makeText(activity, "需要 Shizuku 权限才能安装应用\n请在 Shizuku 应用中授予权限", Toast.LENGTH_LONG).show();
+            // 可以添加引导用户去Shizuku应用的逻辑
             return false;
         } else {
             // 请求权限
@@ -259,16 +296,8 @@ class ShizukuInstallHandler implements InstallMethodHandler {
 
     @Override
     public void install(AppCompatActivity activity, String apkPath) {
-        // 检查 apkPath 是否为空
-        if (apkPath == null || apkPath.isEmpty()) {
-            Toast.makeText(activity, "APK 路径不能为空", Toast.LENGTH_SHORT).show();
+        if (!InstallUtils.checkApkFile(activity, apkPath)) {
             return;
-        }
-        // 简单的路径有效性检查 (实际可能需要更复杂的检查)
-        java.io.File apkFile = new java.io.File(apkPath);
-        if (!apkFile.exists() || !apkFile.isFile()) {
-             Toast.makeText(activity, "无效的 APK 文件路径", Toast.LENGTH_SHORT).show();
-             return;
         }
 
         // 检查 Shizuku 是否在运行以及是否已授权
@@ -324,21 +353,7 @@ class ShizukuInstallHandler implements InstallMethodHandler {
                 final String finalOutput = output.toString().trim();
                 final String finalError = error.toString().trim();
             
-                activity.runOnUiThread(() -> {
-                    if (finalResult == 0 && finalOutput.toLowerCase().contains("success")) { // pm install 成功通常输出 Success
-                        Toast.makeText(activity, "Shizuku 安装成功", Toast.LENGTH_SHORT).show();
-                    } else {
-                        String message = "Shizuku 安装失败";
-                        if (!finalError.isEmpty()) {
-                            message += "，错误信息:\n" + finalError;
-                        } else if (!finalOutput.isEmpty()) {
-                            message += "，输出信息:\n" + finalOutput;
-                        } else {
-                             message += "，代码：" + finalResult;
-                        }
-                        Toast.makeText(activity, message, Toast.LENGTH_LONG).show();
-                    }
-                });
+                InstallUtils.showInstallResult(activity, finalResult, finalOutput, finalError, "Shizuku");
             }
         }).start();
     }
@@ -348,6 +363,22 @@ class ShizukuInstallHandler implements InstallMethodHandler {
              Toast.makeText(activity, "当前 Shizuku 版本过低，不支持运行时权限", Toast.LENGTH_SHORT).show();
              return;
         }
+        
+        // 添加权限请求回调
+        Shizuku.addRequestPermissionResultListener(new Shizuku.OnRequestPermissionResultListener() {
+            @Override
+            public void onRequestPermissionResult(int requestCode, int grantResult) {
+                if (requestCode == MainActivity.SHIZUKU_REQUEST_PERMISSION_CODE) {
+                    if (grantResult == PackageManager.PERMISSION_GRANTED) {
+                        Toast.makeText(activity, "Shizuku 权限已授予", Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(activity, "Shizuku 权限被拒绝", Toast.LENGTH_SHORT).show();
+                        // 可以在这里添加引导用户去设置页面的逻辑
+                    }
+                }
+            }
+        });
+        
         // 使用正确的requestPermission方法
         Shizuku.requestPermission(MainActivity.SHIZUKU_REQUEST_PERMISSION_CODE);
     }
@@ -357,16 +388,8 @@ class ShizukuInstallHandler implements InstallMethodHandler {
 class RootInstallHandler implements InstallMethodHandler {
     @Override
     public void install(AppCompatActivity activity, String apkPath) {
-        // 检查 apkPath 是否为空
-        if (apkPath == null || apkPath.isEmpty()) {
-            Toast.makeText(activity, "APK 路径不能为空", Toast.LENGTH_SHORT).show();
+        if (!InstallUtils.checkApkFile(activity, apkPath)) {
             return;
-        }
-        // 简单的路径有效性检查 (实际可能需要更复杂的检查)
-        java.io.File apkFile = new java.io.File(apkPath);
-        if (!apkFile.exists() || !apkFile.isFile()) {
-             Toast.makeText(activity, "无效的 APK 文件路径", Toast.LENGTH_SHORT).show();
-             return;
         }
 
         // 尝试执行 Root 安装
@@ -378,11 +401,15 @@ class RootInstallHandler implements InstallMethodHandler {
             StringBuilder errorMsg = new StringBuilder();
         
             try {
-                process = Runtime.getRuntime().exec("su"); // 请求 Root 权限
+                // 使用更安全的命令执行方式
+                String[] commands = {
+                    "pm",
+                    "install",
+                    "-r",
+                    apkPath
+                };
+                process = Runtime.getRuntime().exec(commands);
                 os = new java.io.DataOutputStream(process.getOutputStream());
-                // 注意：直接拼接字符串可能存在注入风险，但对于本地文件路径，风险相对较低
-                // 更好的方式是使用 Content Provider 获取 InputStream 并传递给 PackageInstaller API (如果不用 Root)
-                os.writeBytes("pm install -r \"" + apkPath + "\"\n");
                 os.writeBytes("exit\n");
                 os.flush();
         
@@ -408,44 +435,33 @@ class RootInstallHandler implements InstallMethodHandler {
                 // 在 UI 线程更新 Toast
                 final int finalResult = result;
                 final String finalErrorMsg = errorMsg.toString().trim();
-                activity.runOnUiThread(() -> {
-                    if (finalResult == 0) {
-                        Toast.makeText(activity, "Root 安装成功", Toast.LENGTH_SHORT).show();
-                    } else {
-                        String message = "Root 安装失败";
-                        if (!finalErrorMsg.isEmpty()) {
-                            message += "，错误信息:\n" + finalErrorMsg;
-                        } else {
-                            message += "，代码：" + finalResult;
-                        }
-                        Toast.makeText(activity, message, Toast.LENGTH_LONG).show();
-                    }
-                });
+                InstallUtils.showInstallResult(activity, finalResult, null, finalErrorMsg, "Root");
             }
         }).start();
     }
 
     @Override
     public void requestPermission(AppCompatActivity activity) {
-        // 尝试执行一个简单的 Root 命令来检查权限
+        // 使用更安全的Root权限检查方式
         new Thread(() -> {
-            Process process = null;
-            int result = -1;
+            boolean hasRoot = false;
             try {
-                process = Runtime.getRuntime().exec("su -c id"); // 执行 id 命令
-                result = process.waitFor();
+                // 检查su二进制文件是否存在
+                File suFile = new File("/system/bin/su");
+                if (!suFile.exists()) {
+                    suFile = new File("/system/xbin/su");
+                }
+                hasRoot = suFile.exists() && suFile.canExecute();
             } catch (Exception e) {
-                result = -1;
-            } finally {
-                if (process != null) process.destroy();
+                hasRoot = false;
             }
 
-            final boolean hasRoot = (result == 0);
+            final boolean finalHasRoot = hasRoot;
             activity.runOnUiThread(() -> {
-                if (hasRoot) {
-                    Toast.makeText(activity, "已获取 Root 权限", Toast.LENGTH_SHORT).show();
+                if (finalHasRoot) {
+                    Toast.makeText(activity, "设备已Root", Toast.LENGTH_SHORT).show();
                 } else {
-                    Toast.makeText(activity, "未获取 Root 权限", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(activity, "设备未Root或权限不足", Toast.LENGTH_SHORT).show();
                 }
             });
         }).start();
